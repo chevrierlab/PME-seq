@@ -1,7 +1,5 @@
 ---
-title: "Untitled"
-author: "Adam Gruenbaum"
-date: "April 16, 2019"
+title: "DE analysis"
 output: html_document
 ---
 
@@ -12,14 +10,17 @@ knitr::opts_chunk$set(echo = TRUE)
 First we read the results from bcbio into R. The data.frame package provides a variety of tools for working with data frames in R. The `fread()` function is a significantly more efficient and flexible tool for reading in tables than base R, so we'll use it. The annotated_combined.count will be in samples/final/ and then within a folder with the date of the run. Put the name of this folder in folder_name.
 
 ```{r read data}
-# import data.frame library
-library(data.frame)
-# name of folder containing combined count table
-folder_name = "2019-04-11_samples"
+# import data.table library
+library(data.table)
+# name of folder containing combined count table 
+# WILL NEED TO BE UPDATED WITH DATE OF BCBIO RUN
+folder_name = "2019-04-29_bcbio_samples"
 # make full path of annotated_combined count
-count_path = paste0("samples/final/", folder_name, "/annotated_combined.count")
+count_path = paste0("bcbio_samples/final/", folder_name, "/annotated_combined.counts")
 # read table
-data <- fread(count_path)
+data <- data.frame(fread(count_path))
+rownames(data) = make.names(data$symbol, unique=T)
+data$symbol = data$id = NULL
 ```
 
 We'd next like to filter our data a little. We'll remove genes that don't pass a given threshold of counts per million in at least n samples. We'll use the edgeR package for this. edgeR is one of a few different packages for analysing RNAseq data, including DESeq2 and limma. All have their merits and the exact package of choice is as much personal preference as anything else. We use limma for our actual analysis, but edgeR’s tools for normalizing the data and filtering it are useful. 
@@ -29,6 +30,9 @@ We'd next like to filter our data a little. We'll remove genes that don't pass a
 cpm_threshold = 50
 # in at least 2 samples
 cpm_needed = 2
+
+#isolate just 'Ctrl' or 'L' from colnames
+experimental.groups = factor(sub('_.*_.*', '', colnames(data)))
 
 # import edgeR library
 library(edgeR)
@@ -47,7 +51,9 @@ We use limma to do our actual linear modeling. Limma builds an initial model of 
 
 ```{r limma first model}
 # make our design matrix
-design <- model.matrix(~0 + levels(experimental.groups)) 
+design <- model.matrix(~0 + experimental.groups)
+# fix names in design matrix
+colnames(design) = sub('experimental.groups', '', colnames(design))
 # voom to transform
 y <- voom(dge.norm.fltd, design, plot=F)
 # fit model for each gene
@@ -57,11 +63,11 @@ fit <- lmFit(y, design)
 Limma uses contrasts to compare between different components of the model. In order to compare each experimental condition to the control, you’ll need to make a contrast matrix that specifies which groups to compare between for each control. The makeContrasts() function takes a vector of strings of the form “a-b”, each specifying the comparison between group a and group b, and produces a contrast matrix.
 
 ```{r contrasts}
-# make vector of non-control groups
+# make vector of non-control groups (in this case it's just L)
 all.conditions <- levels(experimental.groups)
 all.conditions <- all.conditions[all.conditions != 'Ctrl']
 # make contrast matrix
-contrast.matrix <- makeContrasts(contrasts=str_c(all.conditions, '-Ctrl'), levels=design)
+contrast.matrix <- makeContrasts(contrasts=paste0(all.conditions, '-Ctrl'), levels=design)
 
 # fit contrasts 
 fit2 <- contrasts.fit(fit, contrast.matrix)
@@ -73,7 +79,7 @@ The treat() function computes moderated t-statistics, moderated F-statistic, and
 # our log fold change threshold
 lfc_thresh <- log2(1.5) 
 # calculat treat
-fit.treat <- treat(fit2, lfc_threshold)
+fit.treat <- treat(fit2, lfc_thresh)
 ```
 
 From here we can use `decideTests()` and `topTreat()` to look at which genes are differentially expressed (DE).
@@ -90,4 +96,5 @@ decideTests(fit.treat, p.value=padj_thresh)
 
 # if we want more information, we can use topTreat to look at more detail for each gene,
 # but only one contrast at a time; coef indicates which contrast to look at.
-topTreat(fit.treat, coef=1, number=Inf, p.value=padj_thresh)
+topTreat(fit.treat, coef=1, p.value=padj_thresh)
+```
