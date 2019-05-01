@@ -7,7 +7,7 @@ This repository contains an example for running a differential expression analys
 * _DE_analysis.Rmd_: R Markdown document detailing the differential expression analysis
 * _bcbio_samples.csv_: List of all the fastq files
 * _bcbio_run.sh_: Script for preparing and launching bcbio
-* _bcbio_slurm.sh_: Script for running bcbio, intended to be submitted to a cluster(_bcbio_run.sh_ does this)
+* _bcbio_slurm.sh_: Script for running bcbio, intended to be submitted to a cluster (_bcbio_run.sh_ does this)
 * _illumina-rnaseq.yaml_: Template description of bcbio pipeline. Used by _bcbio_run.sh_ to set up for bcbio.
 
 ## dependencies
