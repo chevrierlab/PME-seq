@@ -1,0 +1,155 @@
+---
+title: "Tissue Specific Gene Analysis"
+author: "Adam Gruenbaum"
+date: "September 25, 2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+First we read the results from bcbio into R. The data.frame package provides a variety of tools for working with data frames in R. The `fread()` function is a significantly more efficient and flexible tool for reading in tables than base R, so we'll use it. The annotated_combined.count will be in samples/final/ and then within a folder with the date of the run. Put the name of this folder in folder_name.
+
+```{r read data}
+# import data.table library
+library(data.table)
+# name of folder containing combined count table 
+# WILL NEED TO BE UPDATED WITH DATE OF BCBIO RUN
+folder_name = "2019-09-12_bcbio_samples"
+# make full path of annotated_combined count
+count_path = paste0("bcbio_samples/final/", folder_name, "/annotated_combined.counts")
+# read table
+data <- data.frame(fread(count_path))
+rownames(data) = data$id
+data$symbol = data$id = NULL
+```
+
+We'd next like to filter our data a little. We'll remove genes that don't pass a given threshold of counts per million in at least n samples. We'll use the edgeR package for this. edgeR is one of a few different packages for analysing RNAseq data, including DESeq2 and limma. All have their merits and the exact package of choice is as much personal preference as anything else. We use limma for our actual analysis, but edgeR’s tools for normalizing the data and filtering it are useful. 
+
+```{r fitler genes}
+# genes must have at least 50 cpm
+cpm_threshold = 50
+# in at least 2 samples
+cpm_needed = 2
+
+#isolate just 'Ctrl' or 'L' from colnames
+tissues = factor(sub('_.*_.*', '', colnames(data)))
+
+# import edgeR library
+library(edgeR)
+# we need to make our data into a DGE object 
+dge <- DGEList(counts = data, group = tissues)
+# normalize
+dge.norm <- calcNormFactors(dge) 
+# calculate filter and save it into a vector
+isexpr <- rowSums(cpm(dge.norm) > cpm_threshold) >= cpm_needed
+# use the vector to filter the genes
+dge.norm.fltd <- dge.norm[isexpr, ]
+
+```
+
+It would be nice to get a quick visualization of our data, to see how our various tissues compare to each other. Of course, because we have so many genes, we can't easily look at them all at once, so we need to find a way to convert them into something simpler that captures most of their information. This involves a trick called dimensionality reduction. We're convertering our large-dimensional dataset (1 dimension for each gene), into a smaller number. One of the most common methods for doing this is Principle Component Analysis (PCA), which transforms our data into a number of principle components, which our composites of each of the genes, designed in such a way that they capture large fractions of the dataset's total variation. Then, we can look at the first and second principle components, and get a sense for how each of our samples are more or less similar to each other.
+
+```{r pca}
+# ggplot is the preimier plotting library in r
+library(ggplot2)
+
+# we'd like a table of normalizd counts per million to do our PCA on 
+cpm = cpm(dge.norm.fltd)
+
+# calculate principle components
+pca_proc = prcomp(t(cpm), scale=T, center=T)
+# make a dataframe with the pca results (pca_proc$x)
+pca_res = data.frame(sample = rownames(pca_proc$x), pca_proc$x)
+# make a column for organ for the dataframe
+pca_res$organ = factor(sub('_.*_.*', '', pca_res$sample))
+
+# plot
+ggplot(pca_res, aes(PC2, PC1)) + 
+    geom_point(aes(fill=organ), shape=21, color='black') +
+    xlab(paste0('PC2: ', summary(pca_proc)$importance[2,2] * 100, '% variance')) +
+    ylab(paste0('PC1: ', summary(pca_proc)$importance[2,1] * 100, '% variance'))
+
+```
+
+We use limma to do our actual linear modeling. Limma builds an initial model of the system using `lmFit()`. It uses design matrices to indicate how experimental conditions apply to each experimental group. One could imagine quite complex design matrices for quite complex experimental designs, but in a situation where you simply want to compare two groups, you can make something quite simple to indicate that each group has a single parameter associated with it.
+We have 15 groups, not two, but in order to look for tissue specific genes, we need to look for genes which are differentially expressed between that tissue and all the other tissues. This means we'll be building 15 distinct models, one for each tissue.
+We also use `voom()` to compute appropriate observational weights by transforming count data to log2-counts per million (log2-cpm) with associated weights, and estimating the mean-variance relationship, which prepares the data for linear modeling.
+`topTable()` outputs a table of genes and associated modeling statistics.
+
+
+```{r limma}
+# a list in which we'll store our toptables
+tops = list()
+
+# loop through each tissue
+for(tissue in unique(tissues)){
+    # make our design matrix, using a vector saying if each sample is this tissue
+    design <- model.matrix(~as.numeric(tissues == tissue))
+
+    # voom to transform
+    y <- voom(dge.norm.fltd, design, plot=F)
+    # fit model for each gene
+    fit <- lmFit(y, design)    
+    
+    # eBayes calculates necessary statistics
+    fit = eBayes(fit)
+    # get statistics for each gene
+    tops[[tissue]] = topTable(fit, n=Inf)
+    # it's useful to have the genes as a column as well as rownames
+    tops[[tissue]]$gene = rownames(tops[[tissue]])
+}
+
+# dplyr and tidyr provide tools for manipulating dataframes
+library(dplyr)
+library(tidyr)
+# we'd like one big dataframe of all the results
+sig = bind_rows(tops, .id='organ') 
+# we only want significantly upregulated genes, which have a pvalue < .01, and an lfc > 4
+sig = filter(sig, adj.P.Val < .01, logFC > 4) 
+
+# how many genes are there for each tissue?
+summarize(group_by(sig, organ), n())
+
+```
+
+For each tissue, what proportion of their counts are from tissue-specific genes?
+
+```{r tissue specific proportions}
+
+# a melted dataframe is "tidy", and will be easier to work with
+melted = melt(cpm(dge.norm))
+colnames(melted) = c('gene', 'sample', 'counts')
+
+# add an organ column
+melted$organ = sub('_.*_.*', '', melted$sample)
+# add a column specifying if the gene is tissue specific for the organ
+melted$specific = paste0(melted$organ, melted$gene) %in% paste0(sig$organ, sig$gene)
+
+# sum the number of counts that are specific or not specific for each organ
+specific_counts = summarize(group_by(melted, organ, specific), counts = sum(counts))
+# separate specific and not specific into two columns
+specific_counts = spread(specific_counts, specific, counts)
+# FALSE and TRUE are not great names to work with
+specific_counts = rename(specific_counts, not_specific = `FALSE`, specific = `TRUE`)
+
+# calculate total counts between specific and unspecific
+specific_counts$total = specific_counts$not_specific + specific_counts$specific
+# calculate percent of counts that are specific
+specific_counts$specific_percent = specific_counts$specific / specific_counts$total * 100
+
+# for visualization purposes we'll want to order our organs by how many counts are specific
+# the forcats package makes ordering factors much easier
+library(forcats)
+# order organ
+specific_counts$organ = fct_reorder(specific_counts$organ, specific_counts$specific_percent, .desc=T)
+
+# plot!
+ggplot(specific_counts, aes(organ, specific_percent)) +
+    geom_col() + 
+    theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust=.5)) + 
+    ylab('Percent tissue specific') + 
+    ggtitle('tissue specific')
+
+```
