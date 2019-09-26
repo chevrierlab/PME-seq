@@ -1,0 +1,153 @@
+---
+title: "Comparing Datasets"
+author: "Adam Gruenbaum"
+date: "September 26, 2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+```
+
+All of the datasets are Transcripts per Million (TPM) that were averaged accross multiple samples from the same organ. The binli set is from Bin Li, et al, [A comprehensive mouse transcriptomic bodymap across 17 Tissues by RNA-seq](https://doi.org/10.1038/s41598-017-04520-z). It and the house dataset were aligned from fastq files using bcbio, during which TPM for each gene were calculated for each sample, which we combined into a count matrix and then averaged accross organs.  
+The encode datasets were made by getting TPM data for each _polyA plus RNA-seq_ sample in the [ENCODE database](https://www.encodeproject.org/matrix/?type=Experiment&status=released) that matched the required tissues/organisms. They were then averaged for each organ.
+The gtex dataset was from the gtex-v8 gene TPM matrix, and organs were assigned from the _SMTS_ column of the sample attributes matrix, both downloadable from the [gtex project website](https://gtexportal.org/home/datasets)
+
+```{r reading data}
+
+# reading in data
+house = read_tsv('comparison_data/average_house.tsv')
+binli = read_tsv('comparison_data/average_binli.tsv')
+encode_mouse = read_tsv('comparison_data/average_encode_mouse.tsv')
+encode_human = read_tsv('comparison_data/average_encode_human.tsv')
+gtex = read_tsv('comparison_data/average_gtex.tsv')
+
+# remove version numbers from encode and gtex gene ids
+colnames(encode_mouse) = str_replace(colnames(encode_mouse), '\\..*$', '')
+colnames(encode_human) = str_replace(colnames(encode_human), '\\..*$', '')
+colnames(gtex) = str_replace(colnames(gtex), '\\..*$', '')
+```
+
+In order to reasonably compare the 5 datasets, we should only be working with genes that are shared between all of them. This necessitates converting between human and mouse gene analogues. We used the biomaRt package to do this. Some human genes map to multiple mouse genes and vice versa, so to avoid ambiguity, only genes with a one-to-one mapping were kept.
+
+```{r unified gene set}
+# get biomart objects for human and mouse
+library(biomaRt)
+human = useMart("ensembl", dataset = "hsapiens_gene_ensembl")
+mouse = useMart("ensembl", dataset = "mmusculus_gene_ensembl")
+# use house genes to get corresponding human genes, where possible
+converted = getLDS(attributes = c("ensembl_gene_id"), filters = "ensembl_gene_id", 
+                   values = colnames(house)[-1], mart = mouse, attributesL = c("ensembl_gene_id"), 
+                   martL = human, uniqueRows=T)
+
+# remove mouse and human genes that appear more than once 
+mouse_table = table(converted$Gene.stable.ID)
+human_table = table(converted$Gene.stable.ID.1)
+converted = converted %>% 
+    filter(table(Gene.stable.ID)[Gene.stable.ID] == 1,
+           table(Gene.stable.ID.1)[Gene.stable.ID.1] == 1)
+
+# cycle through converted genes to find ones that appear in all five datasets
+mouse_genes = c()
+human_genes = c()
+for(i in 1:nrow(converted)){
+    if(converted[i,1] %in% colnames(house) &
+       converted[i,1] %in% colnames(encode_mouse) &
+       converted[i,1] %in% colnames(binli) &
+       converted[i,2] %in% colnames(encode_human) &
+       converted[i,2] %in% colnames(gtex)){
+        mouse_genes = c(mouse_genes, converted[i,1])
+        human_genes = c(human_genes, converted[i,2])
+    }
+}
+
+# cut datasets to just genes which appear in all five
+house = house[, c("organ", mouse_genes)]
+binli = binli[, c("organ", mouse_genes)]
+encode_mouse = encode_mouse[, c("organ", mouse_genes)]
+encode_human = encode_human[, c("organ", human_genes)]
+gtex = gtex[, c("organ", human_genes)]
+
+```
+
+Once the datasets have only genes that compared to each other, we can combine them into one dataset. However, there is likely a batch effect between each of the datasets, which will skew or even dominate our comparison. To remove this we use the `ComBat()` function from the `sva` package.
+
+```{r join}
+# convert human genes to corresponding mouse genes
+colnames(encode_human) =  c("organ", mouse_genes)
+colnames(gtex) =  c("organ", mouse_genes)
+
+# make one big dataframe
+all_together = bind_rows(house = house, binli = binli, encode_mouse = encode_mouse,
+                         encode_human = encode_human, gtex = gtex, .id='source')
+# make a matrix
+all_together_mat = data.matrix(dplyr::select(all_together, -source, -organ))
+rownames(all_together_mat) = str_c(all_together$source, '_', all_together$organ)
+# filter out genes that aren't expressed in any source
+all_together_mat = all_together_mat[, colSums(all_together_mat > 50) > 1]
+
+# use combat to correct batch effect from different sources
+library(sva)
+combat_mat = t(ComBat(t(all_together_mat), all_together$source))
+
+```
+Now that all our data is comparable, we'll use Principle Component Analysis (PCA) to visualize it. To make for a slightly less messy visualization, we'll also run the comparison with just the samples from the mice, and just the house samples with the human samples. 
+
+
+```{r pca}
+
+# pca on all together
+pca_proc = prcomp(combat_mat, scale=T, center=T)
+all_pca_res = data.frame(sample = rownames(pca_proc$x), pca_proc$x) %>%
+    extract(sample, c('source', 'organ'), '(.*)_(.*)')
+
+ggplot(all_pca_res, aes(PC2, PC1)) + 
+    geom_point(aes(color = organ, shape=source), size=3) +
+    scale_color_brewer(type='qual', palette = 6) +
+    xlab(str_c('PC2: ', summary(pca_proc)$importance[2,2] * 100, '% variance')) +
+    ylab(str_c('PC1: ', summary(pca_proc)$importance[2,1] * 100, '% variance')) +
+    theme_classic() +
+    theme(panel.background = element_rect(fill = "white", colour = "black")) +
+    ggtitle("All Together")
+
+# separate just the mouse sources
+just_mouse = combat_mat[str_detect(rownames(combat_mat), "house|binli|mouse"),]
+
+# run pca comparing just mice
+pca_proc = prcomp(just_mouse, scale=T, center=T)
+mouse_pca_res = data.frame(sample = rownames(pca_proc$x), pca_proc$x) %>%
+    extract(sample, c('source', 'organ'), '(.*)_(.*)')
+
+ggplot(mouse_pca_res, aes(PC2, PC1)) + 
+    geom_point(aes(fill = organ, shape=source), size=3) +
+    scale_shape_manual(values = c(21, 22, 24)) + 
+    scale_fill_brewer(type='qual', palette = 6) +
+    guides(fill = guide_legend(override.aes = list(shape = 23))) +
+    xlab(str_c('PC2: ', summary(pca_proc)$importance[2,2] * 100, '% variance')) +
+    ylab(str_c('PC1: ', summary(pca_proc)$importance[2,1] * 100, '% variance')) +
+    theme_classic() +
+    theme(panel.background = element_rect(fill = "white", colour = "black")) +
+    ggtitle("Just Mouse")
+
+
+# separate out house and human sources
+just_human = combat_mat[str_detect(rownames(combat_mat), "house|human|gtex"),]
+
+# run pca to compare house to human sources
+pca_proc = prcomp(just_human, scale=T, center=T)
+human_pca_res = data.frame(sample = rownames(pca_proc$x), pca_proc$x) %>%
+    extract(sample, c('source', 'organ'), '(.*)_(.*)')
+
+ggplot(human_pca_res, aes(PC2, PC1)) + 
+    geom_point(aes(fill = organ, shape=source), size=3) +
+    scale_shape_manual(values = c(21, 22, 24)) + 
+    scale_fill_brewer(type='qual', palette = 6) +
+    guides(fill = guide_legend(override.aes = list(shape = 23))) +
+    xlab(str_c('PC2: ', summary(pca_proc)$importance[2,2] * 100, '% variance')) +
+    ylab(str_c('PC1: ', summary(pca_proc)$importance[2,1] * 100, '% variance')) +
+    theme_classic() +
+    theme(panel.background = element_rect(fill = "white", colour = "black")) + 
+    ggtitle("Just Human")
+
+```
