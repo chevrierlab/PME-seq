@@ -3,9 +3,7 @@
 This repository contains an example for running a differential expression analysis using bcbio to align the fastq files, and the limma package in R to model differential expression. 
 
 ## files
-* _fastqs_: 9 sample fastq files from Human Dendritic Cells RNA-seq. 6 samples were unstimulated (Ctrl), and 3 were stimulated with LPS (L).
-* _DE_analysis.Rmd_: R Markdown document detailing the differential expression analysis
-* _bcbio_samples.csv_: List of all the fastq files
+* _tissue_specificity_analysis.Rmd_: R Markdown document detailing the tissue specificity analysis
 * _bcbio_run.sh_: Script for preparing and launching bcbio
 * _bcbio_slurm.sh_: Script for running bcbio, intended to be submitted to a cluster (_bcbio_run.sh_ does this)
 * _illumina-rnaseq.yaml_: Template description of bcbio pipeline. Used by _bcbio_run.sh_ to set up for bcbio.
@@ -21,4 +19,4 @@ When running bcbio, the code also assumes that you are working on a linux-based 
 While logged into your computing cluster of choice, in the main directory run `./bcbio_run.sh`. This will run a few commands to set up the directory for aligning with bcbio, and then submit the job descirbed in _bcbio_slurm.sh_ to the cluster.
 
 ## 2: R
-Open _DE_analysis.Rmd_ in Rstudio. To run it all at once, knit it. Alternatively, you can step through the commands one by one.
+Open _tissue_specificity_analysis.Rmd_ in Rstudio. To run it all at once, knit it. Alternatively, you can step through the commands one by one.
