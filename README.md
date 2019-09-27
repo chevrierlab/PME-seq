@@ -1,6 +1,6 @@
 # PME-seq
 
-This repository contains an example for running a differential expression analysis using bcbio to align the fastq files, and the limma package in R to model differential expression. 
+This repository contains an example for running a differential expression analysis using bcbio to align the fastq files, and the limma package in R to model differential expression between tissues. It also contains code comparing the data used to data from a few other sources.
 
 ## files
 * _comparison_data_: TPM matrices for comparing our data to other datasets in _comparison.Rmd_
