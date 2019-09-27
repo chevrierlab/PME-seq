@@ -28,4 +28,4 @@ Open _tissue_specificity_analysis.Rmd_ in Rstudio. To run it all at once, knit i
 
 ### 3: Dataset Comparison
 Compares our data to data from a few other sources to asses it's validity.
-Open _tissue_specificity_analysis.Rmd_ in Rstudio. To run it all at once, knit it. Alternatively, you can step through the commands one by one.
+Open _comparison.Rmd_ in Rstudio. To run it all at once, knit it. Alternatively, you can step through the commands one by one.
