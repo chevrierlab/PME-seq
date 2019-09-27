@@ -20,12 +20,15 @@ When running bcbio, the code also assumes that you are working on a linux-based 
 ## Steps:
 ### 1: bcbio
 Processes the fastq files and producing a counts table.  
+
 While logged into your computing cluster of choice, in the main directory run `./bcbio_run.sh`. This will run a few commands to set up the directory for aligning with bcbio, and then submit the job descirbed in _bcbio_slurm.sh_ to the cluster.
 
 ### 2: Tissue Specificity Analysis 
 Analyzes the counts table produced in __(1)__ to look for genes which are upregulated in certain tissues.
+
 Open _tissue_specificity_analysis.Rmd_ in Rstudio. To run it all at once, knit it. Alternatively, you can step through the commands one by one.
 
 ### 3: Dataset Comparison
 Compares our data to data from a few other sources to asses it's validity.
+
 Open _comparison.Rmd_ in Rstudio. To run it all at once, knit it. Alternatively, you can step through the commands one by one.
