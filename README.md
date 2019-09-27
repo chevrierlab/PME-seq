@@ -1,4 +1,4 @@
-# nature-protocol
+# PME-seq
 
 This repository contains an example for running a differential expression analysis using bcbio to align the fastq files, and the limma package in R to model differential expression. 
 
@@ -17,8 +17,15 @@ The provided bits of code assume you have the following software installed:
 
 When running bcbio, the code also assumes that you are working on a linux-based computing cluster, running a scheduler. As written, it is setup for the SLURM scheduler, but it should work with other schedulers with minor modifications to _bcbio_run.sh_ and _bcbio_slurm.sh_ . Additionally, by modifying _bcbio_run.sh_ (and bipassing _bcbio_slurm.sh_), one could run bcbio locally as an alternative.
 
-## 1: bcbio
+## Steps:
+### 1: bcbio
+Processes the fastq files and producing a counts table.  
 While logged into your computing cluster of choice, in the main directory run `./bcbio_run.sh`. This will run a few commands to set up the directory for aligning with bcbio, and then submit the job descirbed in _bcbio_slurm.sh_ to the cluster.
 
-## 2: R
+### 2: Tissue Specificity Analysis 
+Analyzes the counts table produced in __(1)__ to look for genes which are upregulated in certain tissues.
+Open _tissue_specificity_analysis.Rmd_ in Rstudio. To run it all at once, knit it. Alternatively, you can step through the commands one by one.
+
+### 3: Dataset Comparison
+Compares our data to data from a few other sources to asses it's validity.
 Open _tissue_specificity_analysis.Rmd_ in Rstudio. To run it all at once, knit it. Alternatively, you can step through the commands one by one.
