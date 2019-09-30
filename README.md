@@ -13,22 +13,24 @@ This repository contains an example for running a differential expression analys
 ## dependencies
 The provided bits of code assume you have the following software installed: 
 * [bcbio](https://github.com/bcbio/bcbio-nextgen)
-* [R](https://www.r-project.org/) and [RMarkdown](https://rmarkdown.rstudio.com/), likely through [Rstudio](https://www.rstudio.com/)
+  * bcbio is a tool for running various pre-processing pipelines for sequencing data.
+* [R](https://www.r-project.org/) and [RMarkdown](https://rmarkdown.rstudio.com/), we recommend using both with [Rstudio](https://www.rstudio.com/).
+  * R is programming language, and RMarkdown is package for producing documents with embedded R scripts. Rstudio is an integrated devolpment enviroment (IDE) for R.
 
 When running bcbio, the code also assumes that you are working on a linux-based computing cluster, running a scheduler. As written, it is setup for the SLURM scheduler, but it should work with other schedulers with minor modifications to _bcbio_run.sh_ and _bcbio_slurm.sh_ . Additionally, by modifying _bcbio_run.sh_ (and bipassing _bcbio_slurm.sh_), one could run bcbio locally as an alternative.
 
 ## Steps:
 ### 1: bcbio
-Processes the fastq files and producing a counts table.  
+We use bcbio to align our fastq files to a reference genome and then produce a table of counts for each gene/sample. 
 
 While logged into your computing cluster of choice, in the main directory run `./bcbio_run.sh`. This will run a few commands to set up the directory for aligning with bcbio, and then submit the job descirbed in _bcbio_slurm.sh_ to the cluster.
 
 ### 2: Tissue Specificity Analysis 
-Analyzes the counts table produced in __(1)__ to look for genes which are upregulated in certain tissues.
+We use R to analyze the counts table produced in __(1)__ to look for genes which are upregulated in particular tissues.
 
-Open _tissue_specificity_analysis.Rmd_ in Rstudio. To run it all at once, knit it. Alternatively, you can step through the commands one by one.
+Open _tissue_specificity_analysis.Rmd_ in Rstudio. To run it all at once, knit it (there should be a "knit" button on the upper bar). Alternatively, you can step through the commands one by one.
 
 ### 3: Dataset Comparison
-Compares our data to data from a few other sources to asses it's validity.
+We use R to compare our data to data from a few other sources and asses its' validity.
 
 Open _comparison.Rmd_ in Rstudio. To run it all at once, knit it. Alternatively, you can step through the commands one by one.
