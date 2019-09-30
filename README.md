@@ -15,7 +15,7 @@ The provided bits of code assume you have the following software installed:
 * [bcbio](https://github.com/bcbio/bcbio-nextgen)
   * bcbio is a tool for running various pre-processing pipelines for sequencing data.
 * [R](https://www.r-project.org/) and [RMarkdown](https://rmarkdown.rstudio.com/), we recommend using both with [Rstudio](https://www.rstudio.com/).
-  * R is programming language, and RMarkdown is package for producing documents with embedded R scripts. Rstudio is an integrated devolpment enviroment (IDE) for R.
+  * R is a programming language, and RMarkdown is a package for producing documents with embedded R scripts. Rstudio is an integrated devolpment enviroment (IDE) for R.
 
 When running bcbio, the code also assumes that you are working on a linux-based computing cluster, running a scheduler. As written, it is setup for the SLURM scheduler, but it should work with other schedulers with minor modifications to _bcbio_run.sh_ and _bcbio_slurm.sh_ . Additionally, by modifying _bcbio_run.sh_ (and bipassing _bcbio_slurm.sh_), one could run bcbio locally as an alternative.
 
@@ -31,6 +31,6 @@ We use R to analyze the counts table produced in __(1)__ to look for genes which
 Open _tissue_specificity_analysis.Rmd_ in Rstudio. To run it all at once, knit it (there should be a "knit" button on the upper bar). Alternatively, you can step through the commands one by one.
 
 ### 3: Dataset Comparison
-We use R to compare our data to data from a few other sources and asses its' validity.
+We use R to compare our data to data from a few other sources and asses its validity.
 
 Open _comparison.Rmd_ in Rstudio. To run it all at once, knit it. Alternatively, you can step through the commands one by one.
