@@ -3,12 +3,13 @@
 This repository contains an example for running a differential expression analysis using bcbio to align the fastq files, and the limma package in R to model differential expression between tissues. It also contains code comparing the data used to data from a few other sources.
 
 ## files
-* _comparison_data_: TPM matrices for comparing our data to other datasets in _comparison.Rmd_
-* _comparison.Rmd_: R Markdown document for comparing our data to other datasets
-* _tissue_specificity_analysis.Rmd_: R Markdown document detailing the tissue specificity analysis
 * _bcbio_run.sh_: Script for preparing and launching bcbio
 * _bcbio_slurm.sh_: Script for running bcbio, intended to be submitted to a cluster (_bcbio_run.sh_ does this)
+* _comparison_data_: TPM matrices for comparing our data to other datasets in _comparison.Rmd_
+* _comparison.Rmd_: R Markdown document for comparing our data to other datasets
 * _illumina-rnaseq.yaml_: Template description of bcbio pipeline. Used by _bcbio_run.sh_ to set up for bcbio.
+* _immune_specific_genes.txt_: a list of immune specific genes used in _tissue_specificity_analysis.Rmd_
+* _tissue_specificity_analysis.Rmd_: R Markdown document detailing the tissue specificity analysis
 
 ## dependencies
 The provided bits of code assume you have the following software installed: 
