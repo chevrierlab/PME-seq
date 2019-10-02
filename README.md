@@ -15,8 +15,13 @@ This repository contains an example for running a differential expression analys
 The provided bits of code assume you have the following software installed: 
 * [bcbio](https://github.com/bcbio/bcbio-nextgen)
   * bcbio is a tool for running various pre-processing pipelines for sequencing data.
+  * The code was originally run on version 1.1.5
 * [R](https://www.r-project.org/) and [RMarkdown](https://rmarkdown.rstudio.com/), we recommend using both with [Rstudio](https://www.rstudio.com/).
-  * R is a programming language, and RMarkdown is a package for producing documents with embedded R scripts. Rstudio is an integrated devolpment enviroment (IDE) for R.
+  * R is a programming language, and RMarkdown is a package for producing documents with embedded R scripts. Rstudio is an integrated devolpment enviroment (IDE) for R. 
+  * The code was originally run on R version 3.5.2 and RStudio version 1.1.456
+* [SRA toolkit](https://trace.ncbi.nlm.nih.gov/Traces/sra/sra.cgi?view=software)
+  * The NCBI SRA toolkit is a suite of programs used for accessing files from the SRA databse
+  * The code was originally run on version 2.9.3
 
 When running bcbio, the code also assumes that you are working on a linux-based computing cluster, running a scheduler. As written, it is setup for the SLURM scheduler, but it should work with other schedulers with minor modifications to _bcbio_run.sh_ and _bcbio_slurm.sh_ . Additionally, by modifying _bcbio_run.sh_ (and bipassing _bcbio_slurm.sh_), one could run bcbio locally as an alternative.
 
@@ -35,3 +40,5 @@ Open _tissue_specificity_analysis.Rmd_ in Rstudio. To run it all at once, knit i
 We use R to compare our data to data from a few other sources and asses its validity.
 
 Open _comparison.Rmd_ in Rstudio. To run it all at once, knit it. Alternatively, you can step through the commands one by one.
+
+Will take 20-30 minutes.
