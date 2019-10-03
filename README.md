@@ -31,7 +31,7 @@ When running bcbio, the code also assumes that you are working on a linux-based 
 ### 1: bcbio
 We use bcbio to align our fastq files to a reference genome and then produce a table of counts for each gene/sample. 
 
-Run `./download_fastqs.sh`. This runs a few commands to make a _fastqs_ directory, and then to download fastq files into it. This is the script that depends on the SRA toolkit.
+In the main directory, run `./download_fastqs.sh`. This runs a few commands to make a _fastqs_ directory and download fastq files into it. This script depends on the SRA toolkit.
 
 While logged into your computing cluster of choice, in the main directory run `./bcbio_run.sh`. This will run a few commands to set up the directory for aligning with bcbio, and then submit the job descirbed in _bcbio_slurm.sh_ to the cluster.
 
