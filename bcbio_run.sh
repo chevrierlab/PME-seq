@@ -1,3 +1,4 @@
+#!/bin/bash
 # this script prepares and launches bcbio 
 # after running it nothing else needs to be done for bcbio
 
