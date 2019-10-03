@@ -7,8 +7,10 @@ This repository contains an example for running a differential expression analys
 * _bcbio_slurm.sh_: Script for running bcbio, intended to be submitted to a cluster (_bcbio_run.sh_ does this)
 * _comparison_data_: TPM matrices for comparing our data to other datasets in _comparison.Rmd_
 * _comparison.Rmd_: R Markdown document for comparing our data to other datasets
-* _illumina-rnaseq.yaml_: Template description of bcbio pipeline. Used by _bcbio_run.sh_ to set up for bcbio.
+* _download_fastqs.sh_: Script for downloading fastq files using the SRA toolkit
+* _illumina-rnaseq.yaml_: Template description of bcbio pipeline. Used by _bcbio_run.sh_ to set up for bcbio
 * _immune_specific_genes.txt_: a list of immune specific genes used in _tissue_specificity_analysis.Rmd_
+* _sra_data.csv_: a csv files with SRA numbers in the first column and the corresponding sample name in the second column
 * _tissue_specificity_analysis.Rmd_: R Markdown document detailing the tissue specificity analysis
 
 ## dependencies
@@ -28,6 +30,8 @@ When running bcbio, the code also assumes that you are working on a linux-based 
 ## Steps:
 ### 1: bcbio
 We use bcbio to align our fastq files to a reference genome and then produce a table of counts for each gene/sample. 
+
+Run `./download_fastqs.sh`. This runs a few commands to make a _fastqs_ directory, and then to download fastq files into it. This is the script that depends on the SRA toolkit.
 
 While logged into your computing cluster of choice, in the main directory run `./bcbio_run.sh`. This will run a few commands to set up the directory for aligning with bcbio, and then submit the job descirbed in _bcbio_slurm.sh_ to the cluster.
 
