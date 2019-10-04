@@ -6,8 +6,10 @@
 # Run/
 #	  fastq/
 #		  samples.fastq.gz
-#	  bcbio_samples.csv
 #	  illumina-rnaseq.yaml
+
+# bcbio needs a csv file with a list of all of our fastq files
+ls fastqs/ -1 > bcbio_samples.csv
 
 # this command sets up the directory and configuration for bcbio
 bcbio_nextgen.py -w template illumina-rnaseq.yaml bcbio_samples.csv fastqs/*.gz

@@ -16,7 +16,7 @@ First we read the results from bcbio into R. The data.frame package provides a v
 library(data.table)
 # name of folder containing combined count table 
 # WILL NEED TO BE UPDATED WITH DATE OF BCBIO RUN
-folder_name = "2019-09-12_bcbio_samples"
+folder_name = "2019-10-03_bcbio_samples"
 # make full path of annotated_combined count
 count_path = paste0("bcbio_samples/final/", folder_name, "/annotated_combined.counts")
 # read table
