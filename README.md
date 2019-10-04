@@ -21,19 +21,26 @@ The provided bits of code assume you have the following software installed:
 * [R](https://www.r-project.org/) and [RMarkdown](https://rmarkdown.rstudio.com/), we recommend using both with [Rstudio](https://www.rstudio.com/).
   * R is a programming language, and RMarkdown is a package for producing documents with embedded R scripts. Rstudio is an integrated devolpment enviroment (IDE) for R. 
   * The code was originally run on R version 3.5.2 and RStudio version 1.1.456
+  * Additional R packages:
+    * [tidyverse](https://www.tidyverse.org/) - for _tissue_specificity_analysis.Rmd_ and _comparison.Rmd_
+    * [edgeR](https://bioconductor.org/packages/release/bioc/html/edgeR.html) - for _tissue_specificity_analysis.Rmd_
+    * [data.table](https://github.com/Rdatatable/data.table/wiki/Installation) - for _tissue_specificity_analysis.Rmd_
+    * [sva](https://bioconductor.org/packages/release/bioc/html/sva.html) - for _comparison.Rmd_
+    * [biomaRt](https://bioconductor.org/packages/release/bioc/html/biomaRt.html) - for _comparison.Rmd_
 * [SRA toolkit](https://trace.ncbi.nlm.nih.gov/Traces/sra/sra.cgi?view=software)
   * The NCBI SRA toolkit is a suite of programs used for accessing files from the SRA databse
   * The code was originally run on version 2.9.3
+ 
 
-When running bcbio, the code also assumes that you are working on a linux-based computing cluster, running a scheduler. As written, it is setup for the SLURM scheduler, but it should work with other schedulers with minor modifications to _bcbio_run.sh_ and _bcbio_slurm.sh_ . Additionally, by modifying _bcbio_run.sh_ (and bipassing _bcbio_slurm.sh_), one could run bcbio locally as an alternative.
+When running bcbio, the code also assumes that you are working on a linux-based computing cluster, running a scheduler. As written, it is setup for the SLURM scheduler, but it should work with other schedulers with minor modifications to _bcbio_run.sh_ and _bcbio_slurm.sh_ . Additionally, by modifying _bcbio_run.sh_ (and bypassing _bcbio_slurm.sh_), one could run bcbio locally as an alternative.
 
 ## Steps:
 ### 1: bcbio
 We use bcbio to align our fastq files to a reference genome and then produce a table of counts for each gene/sample. 
 
-In the main directory, run `./download_fastqs.sh`. This runs a few commands to make a _fastqs_ directory and download fastq files into it. This script depends on the SRA toolkit. This took us 2 hours, but is probably highly dependent on your internet connection.
+In the main directory, run `./download_fastqs.sh`. This runs a few commands to make a _fastqs_ directory and download fastq files into it. This script depends on the SRA toolkit. This took us 2 hours, but is probably highly dependent on your internet connection. The compressed fastq files are about 14GB.
 
-While logged into your computing cluster of choice, in the main directory run `./bcbio_run.sh`. This will run a few commands to set up the directory for aligning with bcbio, and then submit the job descirbed in _bcbio_slurm.sh_ to the cluster. It took us about 4 hours, but it'll depend on the parameters of your computing cluster.
+While logged into your computing cluster of choice, in the main directory run `./bcbio_run.sh`. This will run a few commands to set up the directory for aligning with bcbio, and then submit the job descirbed in _bcbio_slurm.sh_ to the cluster. It took us about 4 hours, but it'll depend on the parameters of your computing cluster. The files bcbio produces take up about 160GB, but the large majority are temporary and can be removed after the run has completed.
 
 ### 2: Tissue Specificity Analysis 
 We use R to analyze the counts table produced in __(1)__ to look for genes which are upregulated in particular tissues.
