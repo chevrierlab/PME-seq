@@ -31,14 +31,16 @@ When running bcbio, the code also assumes that you are working on a linux-based 
 ### 1: bcbio
 We use bcbio to align our fastq files to a reference genome and then produce a table of counts for each gene/sample. 
 
-In the main directory, run `./download_fastqs.sh`. This runs a few commands to make a _fastqs_ directory and download fastq files into it. This script depends on the SRA toolkit.
+In the main directory, run `./download_fastqs.sh`. This runs a few commands to make a _fastqs_ directory and download fastq files into it. This script depends on the SRA toolkit. This took us 2 hours, but is probably highly dependent on your internet connection.
 
-While logged into your computing cluster of choice, in the main directory run `./bcbio_run.sh`. This will run a few commands to set up the directory for aligning with bcbio, and then submit the job descirbed in _bcbio_slurm.sh_ to the cluster.
+While logged into your computing cluster of choice, in the main directory run `./bcbio_run.sh`. This will run a few commands to set up the directory for aligning with bcbio, and then submit the job descirbed in _bcbio_slurm.sh_ to the cluster. It took us about 4 hours, but it'll depend on the parameters of your computing cluster.
 
 ### 2: Tissue Specificity Analysis 
 We use R to analyze the counts table produced in __(1)__ to look for genes which are upregulated in particular tissues.
 
-Open _tissue_specificity_analysis.Rmd_ in Rstudio. To run it all at once, knit it (there should be a "knit" button on the upper bar). Alternatively, you can step through the commands one by one.
+Open _tissue_specificity_analysis.Rmd_ in Rstudio. To run it all at once, knit it (there should be a "knit" button on the upper bar). Alternatively, you can step through the commands one by one. 
+
+Will take about a minute.
 
 ### 3: Dataset Comparison
 We use R to compare our data to data from a few other sources and asses its validity.
